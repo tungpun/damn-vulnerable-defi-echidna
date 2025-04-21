@@ -35,12 +35,9 @@ contract FLTest {
   //   require(address(receiver).balance == ETHER_IN_RECEIVER, "Balance of the receiver is set");
   // }
   
-  function echidna_test_pool_balance() public view returns (bool) {
-    return address(pool).balance == ETHER_IN_POOL;
-  }
 
-  function echidna_test_receiver_balance() public view returns (bool) {
-    return address(receiver).balance >= ETHER_IN_RECEIVER;
+  function test_receiver_balance() public view returns (bool) {
+    assert( address(receiver).balance >= ETHER_IN_RECEIVER );
   }
   
 

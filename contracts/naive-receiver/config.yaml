@@ -6,7 +6,7 @@
 # - assertion: check assertions
 # - exploration: explore the contract
 # - optimization: optimize a property
-testMode: "property"
+testMode: "assertion"
 
 # allContracts: if true, all contracts in the codebase will be considered main contracts for testing
 # Default: false
