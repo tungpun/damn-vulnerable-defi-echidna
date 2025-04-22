@@ -37,7 +37,11 @@ contract UnstoppableLender is ReentrancyGuard {
         require(balanceBefore >= borrowAmount, "Not enough tokens in pool");
 
         // Ensured by the protocol via the `depositTokens` function
-        assert(poolBalance == balanceBefore);
+        // this is the fix for the flash loan attack
+        assert(poolBalance <= balanceBefore);
+        if (poolBalance < balanceBefore) {
+            poolBalance = balanceBefore;
+        }
         
         damnValuableToken.transfer(msg.sender, borrowAmount);
         
@@ -47,3 +51,4 @@ contract UnstoppableLender is ReentrancyGuard {
         require(balanceAfter >= balanceBefore, "Flash loan hasn't been paid back");
     }
 }
+ 

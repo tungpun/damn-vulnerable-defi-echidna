@@ -15,6 +15,12 @@ module.exports = {
         { version: "0.6.6" }
       ]
     },
+    paths: {
+      sources: "./contracts/unstoppable",
+      tests: "./test/unstoppable",
+      cache: "./cache",
+      artifacts: "./artifacts"
+    },
     /* This is removed for compatibility with crytic-compile
 
     dependencyCompiler: {
