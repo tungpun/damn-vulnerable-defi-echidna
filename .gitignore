@@ -8,3 +8,4 @@ cache
 artifacts
 cache
 yarn.lock
+**/hardhat-dependency-compiler/*

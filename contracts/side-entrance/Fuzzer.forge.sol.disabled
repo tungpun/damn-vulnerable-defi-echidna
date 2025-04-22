@@ -1,8 +1,14 @@
 pragma solidity ^0.8.0;
 
 
-
 import "./SideEntranceLenderPool.sol";
+
+//::: In case of forge test
+// forge install foundry-rs/forge-std --no-commit
+// forge install dapphub/ds-test --no-commit
+import "forge-std/console.sol";
+import { Test } from "forge-std/Test.sol";
+
 
 contract LenderPoolFactory {
   function createLenderPool() public payable returns (SideEntranceLenderPool) {
@@ -12,7 +18,7 @@ contract LenderPoolFactory {
   }
 }
 
-contract SideEntranceFuzzer {
+contract SideEntranceFuzzer is Test {
 
     SideEntranceLenderPool public lenderPool;
 
@@ -43,8 +49,17 @@ contract SideEntranceFuzzer {
       lenderPool.flashLoan(amount);      
     }
 
-    function echidna_test_withdraw() public returns (bool) {
+    function test_echidna_withdraw() public returns (bool) {
+      do_flash_loan(ETHER_TO_BE_EXPLOITED + 0.1 ether);
+      console.log("after flash loan");
+      console.log("balance of the lender pool:  ", address(lenderPool).balance);
+      console.log("balance of the contract:     ", address(this).balance);
+      console.log("initial ether in pool:       ", INITIAL_ETHER_IN_POOL);
       lenderPool.withdraw();
+      console.log("after withdraw");
+      console.log("balance of the lender pool:  ", address(lenderPool).balance);
+      console.log("balance of the contract:     ", address(this).balance);
+      console.log("initial ether in pool:       ", INITIAL_ETHER_IN_POOL);
       return(address(lenderPool).balance >= INITIAL_ETHER_IN_POOL);
     }
     
