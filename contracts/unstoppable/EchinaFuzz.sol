@@ -47,9 +47,7 @@ contract EchinaUnstoppableFuzz {
     return(DVT_Token.balanceOf(address(lender)) >= ETHER_IN_POOL);
   }
 
-  // This is the Echidna property entrypoint.
-  // We want to test whether flash loans can always be made.
-  function echidna_testFlashLoan() public returns (bool) {
+  function echidna_test_if_flashLoan_is_available() public returns (bool) {
     lender.flashLoan(10);
     return true;
   }
