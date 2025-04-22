@@ -22,10 +22,11 @@ contract SideEntranceFuzzer {
     constructor() payable {
       LenderPoolFactory lenderPoolFactory = new LenderPoolFactory();
 
-      lenderPool = lenderPoolFactory.createLenderPool{value: INITIAL_ETHER_IN_POOL}();
-      lenderPool.deposit{value: ETHER_TO_BE_EXPLOITED}();
+      lenderPool = lenderPoolFactory.createLenderPool{value: INITIAL_ETHER_IN_POOL}();      
+    }
 
-      require(address(lenderPool).balance == (INITIAL_ETHER_IN_POOL + ETHER_TO_BE_EXPLOITED), "Initial balance is not correct");
+    function deposit() public payable {
+      lenderPool.deposit{value: msg.value}();
     }
 
     function withdraw() public returns (bool) {
@@ -40,6 +41,7 @@ contract SideEntranceFuzzer {
     }
 
     function do_flash_loan(uint256 amount) public {      
+      require(amount <= address(lenderPool).balance, "Amount is greater than the balance of the lender pool");
       lenderPool.flashLoan(amount);      
     }
 

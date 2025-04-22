@@ -1,3 +1,5 @@
+// to run: ./contracts/side-entrance/toggle_forge_files.sh enable; forge test --match-path contracts/side-entrance/Fuzzer.forge.sol -vvv
+
 pragma solidity ^0.8.0;
 
 
@@ -29,9 +31,9 @@ contract SideEntranceFuzzer is Test {
       LenderPoolFactory lenderPoolFactory = new LenderPoolFactory();
 
       lenderPool = lenderPoolFactory.createLenderPool{value: INITIAL_ETHER_IN_POOL}();
-      lenderPool.deposit{value: ETHER_TO_BE_EXPLOITED}();
+      // lenderPool.deposit{value: ETHER_TO_BE_EXPLOITED}();
 
-      require(address(lenderPool).balance == (INITIAL_ETHER_IN_POOL + ETHER_TO_BE_EXPLOITED), "Initial balance is not correct");
+      // require(address(lenderPool).balance == (INITIAL_ETHER_IN_POOL + ETHER_TO_BE_EXPLOITED), "Initial balance is not correct");
     }
 
     function withdraw() public returns (bool) {
@@ -49,7 +51,13 @@ contract SideEntranceFuzzer is Test {
       lenderPool.flashLoan(amount);      
     }
 
-    function test_echidna_withdraw() public returns (bool) {
+    function test_do_flash_loan() public {      
+      uint256 amount = 1;
+      // require(amount <= address(lenderPool).balance, "Amount is greater than the balance of the lender pool");
+      lenderPool.flashLoan(amount);      
+    }
+
+    function echidna_withdraw() public returns (bool) {
       do_flash_loan(ETHER_TO_BE_EXPLOITED + 0.1 ether);
       console.log("after flash loan");
       console.log("balance of the lender pool:  ", address(lenderPool).balance);
