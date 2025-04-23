@@ -9,3 +9,6 @@ artifacts
 cache
 yarn.lock
 **/hardhat-dependency-compiler/*
+package-lock.json
+crytic-export/
+lib/

